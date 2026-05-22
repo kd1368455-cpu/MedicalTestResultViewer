@@ -1,0 +1,742 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>MedicalTestResultViewer - 検査結果ビューア</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    :root {
+      --bg: #0f172a;
+      --bg-soft: #111827;
+      --card: #1f2937;
+      --accent: #38bdf8;
+      --accent-soft: #0ea5e9;
+      --text: #e5e7eb;
+      --muted: #9ca3af;
+      --danger: #f97373;
+      --border: #374151;
+      --success: #4ade80;
+      --warning: #facc15;
+      --radius: 8px;
+    }
+
+    * {
+      box-sizing: border-box;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    body {
+      margin: 0;
+      padding: 0;
+      background: radial-gradient(circle at top, #1e293b 0, #020617 55%);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    header {
+      padding: 16px 24px;
+      border-bottom: 1px solid var(--border);
+      background: linear-gradient(to right, #020617, #0b1120);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    header h1 {
+      margin: 0;
+      font-size: 18px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--accent);
+    }
+
+    header span {
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    main {
+      padding: 20px;
+      max-width: 1100px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: 1.2fr 2fr;
+      gap: 16px;
+    }
+
+    @media (max-width: 900px) {
+      main {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .card {
+      background: linear-gradient(145deg, #020617, #020617, #020617, #020617);
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      padding: 16px 18px;
+      box-shadow: 0 18px 40px rgba(0, 0, 0, 0.6);
+    }
+
+    .card h2 {
+      margin: 0 0 10px;
+      font-size: 15px;
+      color: var(--accent-soft);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .card h2::before {
+      content: "";
+      width: 6px;
+      height: 18px;
+      border-radius: 999px;
+      background: linear-gradient(to bottom, var(--accent-soft), transparent);
+      display: inline-block;
+    }
+
+    .card p {
+      margin: 0 0 10px;
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .field-group {
+      margin-bottom: 10px;
+    }
+
+    label {
+      display: block;
+      font-size: 12px;
+      margin-bottom: 4px;
+      color: var(--muted);
+    }
+
+    input, select {
+      width: 100%;
+      padding: 7px 9px;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      background: #020617;
+      color: var(--text);
+      font-size: 13px;
+      outline: none;
+      transition: border 0.15s, box-shadow 0.15s;
+    }
+
+    input:focus, select:focus {
+      border-color: var(--accent-soft);
+      box-shadow: 0 0 0 1px rgba(56, 189, 248, 0.4);
+    }
+
+    button {
+      border: none;
+      border-radius: 999px;
+      padding: 7px 14px;
+      font-size: 12px;
+      cursor: pointer;
+      background: radial-gradient(circle at top left, var(--accent-soft), #0369a1);
+      color: #e5f2ff;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      box-shadow: 0 10px 25px rgba(15, 118, 178, 0.5);
+      transition: transform 0.1s, box-shadow 0.1s, filter 0.1s;
+    }
+
+    button:hover {
+      transform: translateY(-1px);
+      filter: brightness(1.05);
+      box-shadow: 0 14px 30px rgba(15, 118, 178, 0.7);
+    }
+
+    button:active {
+      transform: translateY(0);
+      box-shadow: 0 8px 18px rgba(15, 118, 178, 0.5);
+    }
+
+    button.secondary {
+      background: #020617;
+      border: 1px solid var(--border);
+      color: var(--muted);
+      box-shadow: none;
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 3px 9px;
+      border-radius: 999px;
+      font-size: 11px;
+      border: 1px solid var(--border);
+      color: var(--muted);
+    }
+
+    .pill span.dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 999px;
+      background: var(--accent-soft);
+    }
+
+    .pill.danger span.dot {
+      background: var(--danger);
+    }
+
+    .pill.success span.dot {
+      background: var(--success);
+    }
+
+    .pill.warning span.dot {
+      background: var(--warning);
+    }
+
+    .pill-label {
+      font-size: 11px;
+      color: var(--muted);
+      margin-bottom: 6px;
+    }
+
+    .pill-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-bottom: 6px;
+    }
+
+    .table-wrapper {
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      overflow: hidden;
+      background: #020617;
+      margin-top: 8px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12px;
+    }
+
+    thead {
+      background: #020617;
+    }
+
+    th, td {
+      padding: 7px 9px;
+      border-bottom: 1px solid #111827;
+      text-align: left;
+      white-space: nowrap;
+    }
+
+    th {
+      font-weight: 500;
+      color: var(--muted);
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+
+    tbody tr:nth-child(even) {
+      background: #020617;
+    }
+
+    .value-normal {
+      color: var(--success);
+    }
+
+    .value-warning {
+      color: var(--warning);
+    }
+
+    .value-abnormal {
+      color: var(--danger);
+      font-weight: 600;
+    }
+
+    .tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 2px 7px;
+      border-radius: 999px;
+      font-size: 11px;
+      background: #020617;
+      border: 1px solid var(--border);
+      color: var(--muted);
+    }
+
+    .tag span.dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 999px;
+      background: var(--accent-soft);
+    }
+
+    .tag.critical span.dot {
+      background: var(--danger);
+    }
+
+    .tag.info span.dot {
+      background: var(--accent-soft);
+    }
+
+    .tag.neutral span.dot {
+      background: var(--muted);
+    }
+
+    .section-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 6px;
+    }
+
+    .section-header h3 {
+      margin: 0;
+      font-size: 13px;
+      color: var(--text);
+    }
+
+    .section-header small {
+      font-size: 11px;
+      color: var(--muted);
+    }
+
+    .history-note {
+      font-size: 11px;
+      color: var(--muted);
+      margin-top: 4px;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 2px 7px;
+      border-radius: 999px;
+      font-size: 11px;
+      background: rgba(56, 189, 248, 0.08);
+      color: var(--accent-soft);
+      border: 1px solid rgba(56, 189, 248, 0.4);
+    }
+
+    .badge span.dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 999px;
+      background: var(--accent-soft);
+    }
+
+    .footer-note {
+      padding: 10px 20px 16px;
+      font-size: 11px;
+      color: var(--muted);
+      text-align: center;
+      border-top: 1px solid var(--border);
+      background: #020617;
+    }
+
+    .footer-note span {
+      color: var(--accent-soft);
+    }
+
+    .flex-row {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .spacer {
+      height: 6px;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div>
+      <h1>MEDICAL TEST RESULT VIEWER</h1>
+      <span>検査機器連携を想定した検査結果ビューア（UIモック）</span>
+    </div>
+    <div class="badge">
+      <span class="dot"></span>
+      <span>Demo UI / HTML + CSS + JS</span>
+    </div>
+  </header>
+
+  <main>
+    <!-- 左カラム：患者情報・検索条件 -->
+    <section class="card">
+      <h2>患者情報・検査検索</h2>
+      <p>患者IDと検査種別を指定して、検査結果を表示する想定の画面です。（ダミーデータ）</p>
+
+      <div class="field-group">
+        <label for="patientId">患者ID</label>
+        <input id="patientId" type="text" placeholder="例：P-20240522" value="P-20240522">
+      </div>
+
+      <div class="field-group">
+        <label for="patientName">患者氏名</label>
+        <input id="patientName" type="text" placeholder="例：北都 太郎" value="北都 太郎">
+      </div>
+
+      <div class="field-group">
+        <label for="testType">検査種別</label>
+        <select id="testType">
+          <option value="blood">血液検査</option>
+          <option value="ecg">心電図</option>
+          <option value="imaging">画像検査（CT / MRI）</option>
+        </select>
+      </div>
+
+      <div class="field-group">
+        <label for="testDate">検査日</label>
+        <input id="testDate" type="date">
+      </div>
+
+      <div class="spacer"></div>
+
+      <div class="flex-row">
+        <button id="loadButton">
+          <span>検査結果を読み込む</span>
+        </button>
+        <button class="secondary" id="clearButton">
+          条件クリア
+        </button>
+      </div>
+
+      <div class="spacer"></div>
+
+      <p class="pill-label">検査ステータス</p>
+      <div class="pill-row">
+        <div class="pill success">
+          <span class="dot"></span>
+          <span>結果確定</span>
+        </div>
+        <div class="pill warning">
+          <span class="dot"></span>
+          <span>再検査推奨</span>
+        </div>
+        <div class="pill danger">
+          <span class="dot"></span>
+          <span>要注意（異常値あり）</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- 右カラム：検査結果・履歴 -->
+    <section class="card">
+      <div class="section-header">
+        <div>
+          <h3>検査結果一覧</h3>
+          <small id="resultSummary">検査結果はまだ読み込まれていません。</small>
+        </div>
+        <div class="tag info">
+          <span class="dot"></span>
+          <span>デモ用ダミーデータ</span>
+        </div>
+      </div>
+
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th>検査項目</th>
+              <th>結果値</th>
+              <th>基準値</th>
+              <th>判定</th>
+              <th>コメント</th>
+            </tr>
+          </thead>
+          <tbody id="resultBody">
+            <!-- JSで挿入 -->
+          </tbody>
+        </table>
+      </div>
+
+      <div class="spacer"></div>
+
+      <div class="section-header">
+        <div>
+          <h3>検査履歴</h3>
+          <small>直近3件の検査履歴（ダミー）</small>
+        </div>
+        <div class="tag neutral">
+          <span class="dot"></span>
+          <span>履歴参照のみ</span>
+        </div>
+      </div>
+
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th>検査日</th>
+              <th>検査種別</th>
+              <th>概要</th>
+              <th>判定</th>
+            </tr>
+          </thead>
+          <tbody id="historyBody">
+            <!-- JSで挿入 -->
+          </tbody>
+        </table>
+      </div>
+
+      <p class="history-note">
+        ※ 実際の医療システムでは、検査機器からの連携データをもとに結果を表示し、
+        異常値の強調表示や再検査フラグなどを行う想定です。本画面はUIイメージのモックです。
+      </p>
+    </section>
+  </main>
+
+  <div class="footer-note">
+    このページは、<span>医療検査機器連携システムの検査結果ビューア</span>をイメージしたデモUIです。  
+    北都システム様の医療系案件を意識し、異常値の強調や履歴表示など、業務システムらしい画面構成を意識して作成しました。
+  </div>
+
+  <script>
+    // ダミー検査データ
+    const dummyData = {
+      blood: [
+        {
+          name: "白血球数",
+          value: "11,200 /µL",
+          range: "3,500〜9,000 /µL",
+          status: "abnormal",
+          comment: "やや高値。炎症・感染症の可能性あり。"
+        },
+        {
+          name: "赤血球数",
+          value: "480万 /µL",
+          range: "410〜530万 /µL",
+          status: "normal",
+          comment: "基準値内です。"
+        },
+        {
+          name: "ヘモグロビン",
+          value: "12.1 g/dL",
+          range: "13.0〜16.5 g/dL",
+          status: "warning",
+          comment: "やや低値。貧血傾向の可能性あり。"
+        },
+        {
+          name: "血小板数",
+          value: "21.0万 /µL",
+          range: "15.0〜35.0万 /µL",
+          status: "normal",
+          comment: "基準値内です。"
+        }
+      ],
+      ecg: [
+        {
+          name: "心拍数",
+          value: "92 bpm",
+          range: "60〜80 bpm",
+          status: "warning",
+          comment: "やや頻脈傾向。状況に応じて経過観察。"
+        },
+        {
+          name: "QT間隔",
+          value: "420 ms",
+          range: "350〜440 ms",
+          status: "normal",
+          comment: "基準値内です。"
+        },
+        {
+          name: "不整脈検出",
+          value: "軽度",
+          range: "なし",
+          status: "abnormal",
+          comment: "軽度の期外収縮を認めます。必要に応じて精査。"
+        }
+      ],
+      imaging: [
+        {
+          name: "胸部CT 所見",
+          value: "軽度のすりガラス影",
+          range: "異常所見なし",
+          status: "abnormal",
+          comment: "炎症性変化の可能性あり。臨床症状と併せて判断。"
+        },
+        {
+          name: "腹部CT 所見",
+          value: "特記すべき異常なし",
+          range: "異常所見なし",
+          status: "normal",
+          comment: "明らかな異常は認めません。"
+        },
+        {
+          name: "MRI 所見",
+          value: "軽度変性所見",
+          range: "異常所見なし",
+          status: "warning",
+          comment: "加齢性変化と考えられます。"
+        }
+      ]
+    };
+
+    const dummyHistory = [
+      {
+        date: "2026-05-10",
+        type: "血液検査",
+        summary: "定期検査（貧血フォロー）",
+        status: "再検査推奨"
+      },
+      {
+        date: "2026-04-02",
+        type: "心電図",
+        summary: "動悸の精査",
+        status: "要注意"
+      },
+      {
+        date: "2026-02-18",
+        type: "画像検査",
+        summary: "胸部CT（経過観察）",
+        status: "結果確定"
+      }
+    ];
+
+    const resultBody = document.getElementById("resultBody");
+    const historyBody = document.getElementById("historyBody");
+    const resultSummary = document.getElementById("resultSummary");
+    const loadButton = document.getElementById("loadButton");
+    const clearButton = document.getElementById("clearButton");
+    const testTypeSelect = document.getElementById("testType");
+    const testDateInput = document.getElementById("testDate");
+    const patientIdInput = document.getElementById("patientId");
+    const patientNameInput = document.getElementById("patientName");
+
+    function renderResults(type) {
+      const data = dummyData[type] || [];
+      resultBody.innerHTML = "";
+
+      let abnormalCount = 0;
+      let warningCount = 0;
+
+      data.forEach(item => {
+        const tr = document.createElement("tr");
+
+        const nameTd = document.createElement("td");
+        nameTd.textContent = item.name;
+
+        const valueTd = document.createElement("td");
+        valueTd.textContent = item.value;
+
+        const rangeTd = document.createElement("td");
+        rangeTd.textContent = item.range;
+
+        const statusTd = document.createElement("td");
+        const statusSpan = document.createElement("span");
+        if (item.status === "normal") {
+          statusSpan.textContent = "基準値内";
+          statusSpan.className = "value-normal";
+        } else if (item.status === "warning") {
+          statusSpan.textContent = "要経過観察";
+          statusSpan.className = "value-warning";
+          warningCount++;
+        } else {
+          statusSpan.textContent = "異常値";
+          statusSpan.className = "value-abnormal";
+          abnormalCount++;
+        }
+        statusTd.appendChild(statusSpan);
+
+        const commentTd = document.createElement("td");
+        commentTd.textContent = item.comment;
+
+        tr.appendChild(nameTd);
+        tr.appendChild(valueTd);
+        tr.appendChild(rangeTd);
+        tr.appendChild(statusTd);
+        tr.appendChild(commentTd);
+
+        resultBody.appendChild(tr);
+      });
+
+      const typeLabel =
+        type === "blood" ? "血液検査" :
+        type === "ecg" ? "心電図" :
+        "画像検査";
+
+      const dateText = testDateInput.value || "検査日未指定";
+
+      resultSummary.textContent =
+        `${typeLabel}の結果を表示中（${dateText}）。異常値 ${abnormalCount} 件、要経過観察 ${warningCount} 件。`;
+    }
+
+    function renderHistory() {
+      historyBody.innerHTML = "";
+      dummyHistory.forEach(h => {
+        const tr = document.createElement("tr");
+
+        const dateTd = document.createElement("td");
+        dateTd.textContent = h.date;
+
+        const typeTd = document.createElement("td");
+        typeTd.textContent = h.type;
+
+        const summaryTd = document.createElement("td");
+        summaryTd.textContent = h.summary;
+
+        const statusTd = document.createElement("td");
+        const pill = document.createElement("div");
+        pill.className = "pill";
+
+        const dot = document.createElement("span");
+        dot.className = "dot";
+
+        const label = document.createElement("span");
+        label.textContent = h.status;
+
+        if (h.status.includes("要注意")) {
+          pill.classList.add("danger");
+        } else if (h.status.includes("再検査")) {
+          pill.classList.add("warning");
+        } else {
+          pill.classList.add("success");
+        }
+
+        pill.appendChild(dot);
+        pill.appendChild(label);
+        statusTd.appendChild(pill);
+
+        tr.appendChild(dateTd);
+        tr.appendChild(typeTd);
+        tr.appendChild(summaryTd);
+        tr.appendChild(statusTd);
+
+        historyBody.appendChild(tr);
+      });
+    }
+
+    loadButton.addEventListener("click", () => {
+      const type = testTypeSelect.value;
+      const pid = patientIdInput.value.trim();
+      const name = patientNameInput.value.trim();
+
+      if (!pid || !name) {
+        alert("患者IDと患者氏名を入力してください。");
+        return;
+      }
+
+      renderResults(type);
+      renderHistory();
+    });
+
+    clearButton.addEventListener("click", () => {
+      testDateInput.value = "";
+      testTypeSelect.value = "blood";
+      resultBody.innerHTML = "";
+      resultSummary.textContent = "検査結果はまだ読み込まれていません。";
+    });
+
+    // 初期表示（履歴だけ）
+    renderHistory();
+  </script>
+</body>
+</html>
