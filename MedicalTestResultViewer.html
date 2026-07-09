@@ -225,11 +225,25 @@
     }
 
     th, td {
-      padding: 7px 9px;
-      border-bottom: 1px solid #111827;
-      text-align: left;
-      white-space: nowrap;
+  padding: 7px 9px;
+  border-bottom: 1px solid #111827;
+  text-align: left;
     }
+    #resultBody input,
+#resultBody select{
+    width:100%;
+    min-width:120px;
+    padding:4px;
+    border:1px solid var(--border);
+    background:#020617;
+    color:var(--text);
+    border-radius:4px;
+}
+
+#resultBody input:focus,
+#resultBody select:focus{
+    border-color:var(--accent-soft);
+}
 
     th {
       font-weight: 500;
@@ -612,62 +626,79 @@
     const patientNameInput = document.getElementById("patientName");
 
     function renderResults(type) {
-      const data = dummyData[type] || [];
-      resultBody.innerHTML = "";
+  const data = dummyData[type] || [];
+  resultBody.innerHTML = "";
 
-      let abnormalCount = 0;
-      let warningCount = 0;
+  let abnormalCount = 0;
+  let warningCount = 0;
 
-      data.forEach(item => {
-        const tr = document.createElement("tr");
+  data.forEach(item => {
+    const tr = document.createElement("tr");
 
-        const nameTd = document.createElement("td");
-        nameTd.textContent = item.name;
+    // 検査項目
+    const nameTd = document.createElement("td");
+    const nameInput = document.createElement("input");
+    nameInput.type = "text";
+    nameInput.value = item.name;
+    nameTd.appendChild(nameInput);
 
-        const valueTd = document.createElement("td");
-        valueTd.textContent = item.value;
+    // 結果値
+    const valueTd = document.createElement("td");
+    const valueInput = document.createElement("input");
+    valueInput.type = "text";
+    valueInput.value = item.value;
+    valueTd.appendChild(valueInput);
 
-        const rangeTd = document.createElement("td");
-        rangeTd.textContent = item.range;
+    // 基準値
+    const rangeTd = document.createElement("td");
+    const rangeInput = document.createElement("input");
+    rangeInput.type = "text";
+    rangeInput.value = item.range;
+    rangeTd.appendChild(rangeInput);
 
-        const statusTd = document.createElement("td");
-        const statusSpan = document.createElement("span");
-        if (item.status === "normal") {
-          statusSpan.textContent = "基準値内";
-          statusSpan.className = "value-normal";
-        } else if (item.status === "warning") {
-          statusSpan.textContent = "要経過観察";
-          statusSpan.className = "value-warning";
-          warningCount++;
-        } else {
-          statusSpan.textContent = "異常値";
-          statusSpan.className = "value-abnormal";
-          abnormalCount++;
-        }
-        statusTd.appendChild(statusSpan);
+    // 判定
+    const statusTd = document.createElement("td");
+    const statusSelect = document.createElement("select");
 
-        const commentTd = document.createElement("td");
-        commentTd.textContent = item.comment;
+    statusSelect.innerHTML = `
+      <option value="normal">基準値内</option>
+      <option value="warning">要経過観察</option>
+      <option value="abnormal">異常値</option>
+    `;
 
-        tr.appendChild(nameTd);
-        tr.appendChild(valueTd);
-        tr.appendChild(rangeTd);
-        tr.appendChild(statusTd);
-        tr.appendChild(commentTd);
+    statusSelect.value = item.status;
 
-        resultBody.appendChild(tr);
-      });
+    if (item.status === "warning") warningCount++;
+    if (item.status === "abnormal") abnormalCount++;
 
-      const typeLabel =
-        type === "blood" ? "血液検査" :
-        type === "ecg" ? "心電図" :
-        "画像検査";
+    statusTd.appendChild(statusSelect);
 
-      const dateText = testDateInput.value || "検査日未指定";
+    // コメント
+    const commentTd = document.createElement("td");
+    const commentInput = document.createElement("input");
+    commentInput.type = "text";
+    commentInput.value = item.comment;
+    commentTd.appendChild(commentInput);
 
-      resultSummary.textContent =
-        `${typeLabel}の結果を表示中（${dateText}）。異常値 ${abnormalCount} 件、要経過観察 ${warningCount} 件。`;
-    }
+    tr.appendChild(nameTd);
+    tr.appendChild(valueTd);
+    tr.appendChild(rangeTd);
+    tr.appendChild(statusTd);
+    tr.appendChild(commentTd);
+
+    resultBody.appendChild(tr);
+  });
+
+  const typeLabel =
+    type === "blood" ? "血液検査" :
+    type === "ecg" ? "心電図" :
+    "画像検査";
+
+  const dateText = testDateInput.value || "検査日未指定";
+
+  resultSummary.textContent =
+    `${typeLabel}の結果を表示中（${dateText}）。異常値 ${abnormalCount} 件、要経過観察 ${warningCount} 件。`;
+}
 
     function renderHistory() {
       historyBody.innerHTML = "";
@@ -715,17 +746,23 @@
     }
 
     loadButton.addEventListener("click", () => {
-      const type = testTypeSelect.value;
-      const pid = patientIdInput.value.trim();
-      const name = patientNameInput.value.trim();
+      loadButton.addEventListener("click", () => {
+  const type = testTypeSelect.value;
+  const pid = patientIdInput.value.trim();
+  const name = patientNameInput.value.trim();
 
-      if (!pid || !name) {
-        alert("患者IDと患者氏名を入力してください。");
-        return;
-      }
+  if (!pid || !name) {
+    alert("患者IDと患者氏名を入力してください。");
+    return;
+  }
 
-      renderResults(type);
-      renderHistory();
+  // 既に表示されている場合は再読み込みしない
+  if (resultBody.rows.length === 0) {
+    renderResults(type);
+  }
+
+  renderHistory();
+});
     });
 
     clearButton.addEventListener("click", () => {
